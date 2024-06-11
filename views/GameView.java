@@ -30,6 +30,7 @@ public class GameView extends JPanel {
     public int playerNumber;
     public int currentPlayer;
     public int round = 0;
+    public int bet = 50;
 
     Deck communityCardsDeck;
     List<Player> players;
@@ -185,12 +186,30 @@ public class GameView extends JPanel {
             }
 
             case "action": {
+                Player player = players.get(currentPlayer);
                 String action = tokens[1];
+                switch (action) {
+                    case "call":
+                        player.placeBet(bet);
+                        break;
+
+                    case "raise":
+                        System.out.println(tokens[2]);
+                        bet += Integer.parseInt(tokens[2]);
+                        player.placeBet(bet);
+                        break;
+                }
+
+                updateTop();
+                updateBottom();
+
                 System.out.println("Player: " + action);
+
                 currentPlayer++;
                 if (currentPlayer == playerCount) {
                     currentPlayer = 0;
                     round++;
+                    bet = 100;
 
                     if (round == 5) {
                         end();
@@ -246,6 +265,7 @@ public class GameView extends JPanel {
         roomID = id;
         currentPlayer = 0;
         round = 0;
+        bet = 50;
         String message = String.format("{\"id\": \"%s\", \"type\":\"join\"}", id);
         send(message);
 
@@ -391,7 +411,9 @@ class PlayerInfoView extends JPanel {
                 return;
             }
 
-            String msg = String.format("{\"id\": \"%s\", \"type\":\"action\",\"action\":\"raise\"}", parent.roomID);
+            String amount = raiseAmountField.getText();
+            String format = "{\"id\": \"%s\", \"type\":\"action\",\"action\":\"raise\", \"amount\":%s}";
+            String msg = String.format(format, parent.roomID, amount);
             parent.send(msg);
         });
 
