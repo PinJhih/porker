@@ -35,6 +35,5 @@ public class MainView extends JPanel {
 
     public void setRoom(String id) {
         game.setRoom(id);
-        game.started = false;
     }
 }

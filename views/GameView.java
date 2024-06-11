@@ -1,13 +1,11 @@
 package views;
 
-
 import java.util.*;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 
@@ -21,45 +19,62 @@ public class GameView extends JPanel {
     private PlayerInfoView PlayerInfoView;
     private JLabel currentBetLabel;
     private JLabel currentPlayerLabel;
-    
+    private JLabel currentRoomLabel;
+    private JPanel topPlayersPanel;
+    private JPanel bottomPlayersPanel;
+
     private Session session;
     public String roomID = "";
-    public boolean started = false;
     public int playerNumber;
+    public int currentPlayer;
 
-    public GameView(MainView mainView, Deck communityCardsDeck, Player[] players) {
+    Deck communityCardsDeck;
+    List<Player> players;
+
+    public GameView(MainView mainView) {
+        Card[] initCards = new Card[5];
+        for (int i = 0; i < 5; i++) {
+            initCards[i] = new Card();
+        }
+        communityCardsDeck = new Deck(initCards);
+
+        players = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            players.add(new Player("", 0));
+        }
+
         Color backGroundColor = new Color(34, 139, 34);
         this.setBackground(backGroundColor);
         setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1.0;
-    
+
         // 最上層新增一個panel
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(backGroundColor);
-    
-        JLabel currentRoomLabel = new JLabel("Room NO.1");
+
+        currentRoomLabel = new JLabel("Room " + roomID);
         currentRoomLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 20));
         currentRoomLabel.setForeground(Color.WHITE);
         currentRoomLabel.setHorizontalAlignment(JLabel.CENTER);
         topPanel.add(currentRoomLabel, BorderLayout.CENTER);
-    
+
         JButton quitButton = new Button("Quit", "logout");
         topPanel.add(quitButton, BorderLayout.EAST);
-    
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 5;
         gbc.gridheight = 1;
         gbc.weighty = 0.1;
         add(topPanel, gbc);
-    
+
         // 上方放置四位玩家
-        JPanel topPlayersPanel = new JPanel(new GridLayout(1, 4));
+        topPlayersPanel = new JPanel(new GridLayout(1, 4));
         topPlayersPanel.setBackground(backGroundColor);
         for (int i = 0; i < 4; i++) {
-            topPlayersPanel.add(new PlayerView(players[i]));
+            topPlayersPanel.add(new PlayerView(players.get(i)));
         }
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -67,32 +82,30 @@ public class GameView extends JPanel {
         gbc.gridheight = 1;
         gbc.weighty = 0.1;
         add(topPlayersPanel, gbc);
-    
+
         // 公共牌區域視圖
         JPanel communityPanel = new JPanel(new FlowLayout());
         communityPanel.setBackground(backGroundColor);
         communityCardsView = new HorizontalDeckView(communityCardsDeck);
         communityPanel.add(communityCardsView);
-        
-        JPanel communityInfo = new JPanel(new GridLayout(2,1));
+
+        JPanel communityInfo = new JPanel(new GridLayout(2, 1));
         communityInfo.setBackground(backGroundColor);
-        
+
         // 當前玩家
         currentPlayerLabel = new JLabel("Current Player: ");
         currentPlayerLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
         currentPlayerLabel.setForeground(new Color(255, 215, 0)); // 設置文字顏色
         currentPlayerLabel.setBackground(backGroundColor);
         communityInfo.add(currentPlayerLabel);
-        
+
         // 當前下注金額
         currentBetLabel = new JLabel("Current Bet: ");
         currentBetLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
         currentBetLabel.setForeground(new Color(255, 165, 0)); // 設置文字顏色
         currentBetLabel.setBackground(backGroundColor);
         communityInfo.add(currentBetLabel);
-    
-        
-    
+
         communityPanel.add(communityInfo);
 
         gbc.gridx = 0;
@@ -101,12 +114,12 @@ public class GameView extends JPanel {
         gbc.gridheight = 2;
         gbc.weighty = 0.2;
         add(communityPanel, gbc);
-    
+
         // 下方放置四位玩家
-        JPanel bottomPlayersPanel = new JPanel(new GridLayout(1, 4));
+        bottomPlayersPanel = new JPanel(new GridLayout(1, 4));
         bottomPlayersPanel.setBackground(backGroundColor);
-        for (int i = 4; i < players.length; i++) {
-            bottomPlayersPanel.add(new PlayerView(players[i]));
+        for (int i = 4; i < players.size(); i++) {
+            bottomPlayersPanel.add(new PlayerView(players.get(i)));
         }
         gbc.gridx = 0;
         gbc.gridy = 4;
@@ -114,19 +127,37 @@ public class GameView extends JPanel {
         gbc.gridheight = 1;
         gbc.weighty = 0.1;
         add(bottomPlayersPanel, gbc);
-    
+
         // 放置控制區域視圖
-        PlayerInfoView = new PlayerInfoView(players[0]);
+        PlayerInfoView = new PlayerInfoView(players.get(0));
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 4;
         gbc.gridheight = 1;
         gbc.weighty = 0.1;
         add(PlayerInfoView, gbc);
+
+        String uri = "ws://localhost:8080";
+        try {
+            ContainerProvider.getWebSocketContainer().connectToServer(this, new URI(uri));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    
+    void updateTop() {
+        topPlayersPanel.removeAll();
+        for (int i = 0; i < 4; i++) {
+            topPlayersPanel.add(new PlayerView(players.get(i)));
+        }
+    }
 
+    void updateBottom() {
+        bottomPlayersPanel.removeAll();
+        for (int i = 4; i < players.size(); i++) {
+            bottomPlayersPanel.add(new PlayerView(players.get(i)));
+        }
+    }
 
     @OnOpen
     public void onOpen(Session session) {
@@ -172,17 +203,17 @@ public class GameView extends JPanel {
         roomID = id;
         String message = String.format("{\"id\": \"%s\", \"type\":\"join\"}", id);
         send(message);
+
+        currentRoomLabel.setText("Room: " + id);
     }
 }
-
 
 class PlayerView extends JPanel {
     private Player player;
     private JLabel playerNameLabel;
     private JLabel betLabel;
     private JLabel chipsLabel;
-    private JLabel card1Label;
-    private JLabel card2Label;
+    private HorizontalDeckView cards;
 
     public PlayerView(Player player) {
         this.setBackground(new Color(34, 139, 34));
@@ -194,14 +225,14 @@ class PlayerView extends JPanel {
         playerInfoPanel.setBackground(new Color(34, 139, 34));
         playerInfoPanel.add(playerNameLabel);
         playerNameLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
-        playerNameLabel.setForeground(new Color(255, 215, 0)); 
+        playerNameLabel.setForeground(new Color(255, 215, 0));
         // 顯示玩家下注金額和剩餘籌碼
         betLabel = new JLabel("Bet: " + player.getCurrentBet());
         betLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
         betLabel.setForeground(new Color(255, 165, 0)); // 設置文字顏色為紅色
         chipsLabel = new JLabel("Chips: " + player.getChips());
         chipsLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
-        chipsLabel.setForeground(Color.LIGHT_GRAY); 
+        chipsLabel.setForeground(Color.LIGHT_GRAY);
 
         JPanel betChipsPanel = new JPanel(new GridLayout(1, 2)); // 使用 GridLayout 排列下注金額和籌碼
         betChipsPanel.setBackground(new Color(34, 139, 34));
@@ -214,25 +245,15 @@ class PlayerView extends JPanel {
         // 顯示玩家的卡片
         JPanel cardsPanel = new JPanel(new FlowLayout());
         cardsPanel.setBackground(new Color(34, 139, 34));
-        card1Label = new JLabel();
-        card2Label = new JLabel();
-        cardsPanel.add(card1Label);
-        cardsPanel.add(card2Label);
+        cards = new HorizontalDeckView(player.getHand());
+        cardsPanel.add(cards);
         updateCards();
         add(cardsPanel, BorderLayout.CENTER);
     }
 
     public void updateCards() {
-        List<Card> hand = player.getHand();
-        card1Label.setIcon(new ImageIcon(toImage(hand.get(0))));
-        card2Label.setIcon(new ImageIcon(toImage(hand.get(1))));
-    }
-
-    private Image toImage(Card card) {
-        String path = "./images/card-face/" + card.toString() + ".png";
-        ImageIcon originalIcon = new ImageIcon(path);
-        Image image = originalIcon.getImage().getScaledInstance(75, 105, Image.SCALE_SMOOTH);
-        return image;
+        Deck hand = player.getHand();
+        cards.update(hand);
     }
 }
 
@@ -265,7 +286,7 @@ class PlayerInfoView extends JPanel {
         JPanel controlPanel = new JPanel(new GridBagLayout());
         controlPanel.setBackground(new Color(34, 139, 34));
         GridBagConstraints rightGbc = new GridBagConstraints();
-        
+
         rightGbc.gridx = 0;
         rightGbc.gridy = 0;
         rightGbc.gridwidth = 2;

@@ -2,7 +2,7 @@ package models;
 
 public class Card implements Comparable<Card> {
     public static enum Suit {
-        SPADE, HEART, DIAMOND, CLUB
+        SPADE, HEART, DIAMOND, CLUB, NONE
     }
 
     private Suit suit;
@@ -11,6 +11,11 @@ public class Card implements Comparable<Card> {
     public Card(Suit suit, int face) {
         this.suit = suit;
         this.face = face;
+    }
+
+    public Card() {
+        this.suit = Suit.NONE;
+        this.face = 0;
     }
 
     @Override
@@ -36,6 +41,9 @@ public class Card implements Comparable<Card> {
                 break;
             case CLUB:
                 str += "C";
+                break;
+            case NONE:
+                str = "Back";
                 break;
         }
         return str;
