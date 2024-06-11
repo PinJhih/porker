@@ -66,4 +66,8 @@ public class Player {
         this.name = name;
         this.chips = 10000;
     }
+
+    public void setHand(Card[] c) {
+        hand = new Deck(c);
+    }
 }

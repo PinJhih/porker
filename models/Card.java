@@ -8,14 +8,35 @@ public class Card implements Comparable<Card> {
     private Suit suit;
     private int face;
 
+    public Card() {
+        this.suit = Suit.NONE;
+        this.face = 0;
+    }
+
     public Card(Suit suit, int face) {
         this.suit = suit;
         this.face = face;
     }
 
-    public Card() {
-        this.suit = Suit.NONE;
-        this.face = 0;
+    public Card(String str) {
+        int n = str.length();
+        String num = str.substring(0, str.length() - 1);
+        this.face = Integer.parseInt(num);
+
+        switch (str.charAt(n - 1)) {
+            case 'S':
+                this.suit = Suit.SPADE;
+                break;
+            case 'H':
+                this.suit = Suit.HEART;
+                break;
+            case 'D':
+                this.suit = Suit.DIAMOND;
+                break;
+            case 'C':
+                this.suit = Suit.CLUB;
+                break;
+        }
     }
 
     @Override

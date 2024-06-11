@@ -16,7 +16,7 @@ import models.*;
 @ClientEndpoint
 public class GameView extends JPanel {
     private HorizontalDeckView communityCardsView;
-    private PlayerInfoView PlayerInfoView;
+    private PlayerInfoView playerInfoView;
     private JLabel currentBetLabel;
     private JLabel currentPlayerLabel;
     private JLabel currentRoomLabel;
@@ -131,13 +131,13 @@ public class GameView extends JPanel {
         add(bottomPlayersPanel, gbc);
 
         // 放置控制區域視圖
-        PlayerInfoView = new PlayerInfoView(players.get(0));
+        playerInfoView = new PlayerInfoView(players.get(playerNumber));
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 4;
         gbc.gridheight = 1;
         gbc.weighty = 0.1;
-        add(PlayerInfoView, gbc);
+        add(playerInfoView, gbc);
 
         String uri = "ws://localhost:8080";
         try {
@@ -172,13 +172,14 @@ public class GameView extends JPanel {
         String[] tokens = message.split(":");
         switch (tokens[0]) {
             case "num": {
-                playerNumber = Integer.parseInt(tokens[1]);
+                playerNumber = Integer.parseInt(tokens[1]) - 1;
                 break;
             }
 
             case "action": {
                 String action = tokens[1];
                 System.out.println("Player: " + action);
+                break;
             }
 
             case "join": {
@@ -189,6 +190,15 @@ public class GameView extends JPanel {
 
                 updateTop();
                 updateBottom();
+                break;
+            }
+
+            case "card": {
+                String[] temp = tokens[1].split("-");
+                Card[] hand = { new Card(temp[0]), new Card(temp[1]) };
+                players.get(playerNumber).setHand(hand);
+                playerInfoView.update();
+                break;
             }
         }
     }
@@ -274,6 +284,7 @@ class PlayerInfoView extends JPanel {
     private Button callButton;
     private Button raiseButton;
     private JTextField raiseAmountField;
+    PlayerView playerView;
 
     public PlayerInfoView(Player player) {
         setBackground(new Color(144, 238, 144));
@@ -283,7 +294,7 @@ class PlayerInfoView extends JPanel {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // 设置左边的 PlayerView，占 3 宽度和 3 高度
-        PlayerView playerView = new PlayerView(player);
+        playerView = new PlayerView(player);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
@@ -346,5 +357,9 @@ class PlayerInfoView extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
         add(controlPanel, gbc);
+    }
+
+    public void update() {
+        playerView.updateCards();
     }
 }
