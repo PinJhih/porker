@@ -23,6 +23,7 @@ public class GameView extends JPanel {
     private JPanel topPlayersPanel;
     private JPanel bottomPlayersPanel;
 
+    public MainView context;
     private Session session;
     public String roomID = "";
     public int playerNumber;
@@ -32,6 +33,7 @@ public class GameView extends JPanel {
     List<Player> players;
 
     public GameView(MainView mainView) {
+        context = mainView;
         Card[] initCards = new Card[5];
         for (int i = 0; i < 5; i++) {
             initCards[i] = new Card();
@@ -177,6 +179,16 @@ public class GameView extends JPanel {
             case "action": {
                 String action = tokens[1];
                 System.out.println("Player: " + action);
+            }
+
+            case "join": {
+                String[] names = context.client.getRoom(this.roomID);
+                for (int i = 0; i < names.length; i++) {
+                    players.get(i).setName(names[i]);
+                }
+
+                updateTop();
+                updateBottom();
             }
         }
     }

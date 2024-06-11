@@ -61,4 +61,9 @@ public class Player {
     public void receiveChips(int amount) {
         chips += amount;
     }
+
+    public void setName(String name) {
+        this.name = name;
+        this.chips = 10000;
+    }
 }

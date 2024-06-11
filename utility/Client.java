@@ -39,7 +39,7 @@ public class Client {
     }
 
     public boolean joinRoom(String id) {
-        String url = "/api/" + id;
+        String url = "/api/join/" + id;
         Response res = Server.fetch(url, "GET", token, "");
         return res.getStatus() == 200;
     }
@@ -54,5 +54,10 @@ public class Client {
             rooms.add(room);
         }
         return rooms;
+    }
+
+    public String[] getRoom(String id) {
+        Response res = Server.fetch("/api/room/" + id, "GET", token, "");
+        return res.getString("players").split("-");
     }
 }

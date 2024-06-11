@@ -46,9 +46,10 @@ public class LobbyView extends JPanel {
         joinRoomButton.addActionListener(e -> {
             RoomSelectionDialog dialog = new RoomSelectionDialog(mainView.frame, mainView.client);
             dialog.setVisible(true);
-            String selectedRoom = dialog.getSelectedRoom();
+            String selectedRoom = dialog.getSelectedRoom().split(" ")[0];
             if (selectedRoom != null) {
-                mainView.setRoom(selectedRoom.split(" ")[0]);
+                mainView.client.joinRoom(selectedRoom);
+                mainView.setRoom(selectedRoom);
                 mainView.switchPanel("game");
             }
         });
