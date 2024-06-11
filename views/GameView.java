@@ -26,8 +26,10 @@ public class GameView extends JPanel {
     public MainView context;
     private Session session;
     public String roomID = "";
+    public int playerCount = 0;
     public int playerNumber;
     public int currentPlayer;
+    public int round = 0;
 
     Deck communityCardsDeck;
     List<Player> players;
@@ -95,7 +97,7 @@ public class GameView extends JPanel {
         communityInfo.setBackground(backGroundColor);
 
         // 當前玩家
-        currentPlayerLabel = new JLabel("Current Player: ");
+        currentPlayerLabel = new JLabel("Current Player: " + players.get(0).getName());
         currentPlayerLabel.setFont(new Font("Comic Sans MS", Font.PLAIN, 14)); // 設置字體
         currentPlayerLabel.setForeground(new Color(255, 215, 0)); // 設置文字顏色
         currentPlayerLabel.setBackground(backGroundColor);
@@ -161,6 +163,10 @@ public class GameView extends JPanel {
         }
     }
 
+    void end() {
+        context.switchPanel("lobby");
+    }
+
     @OnOpen
     public void onOpen(Session session) {
         this.session = session;
@@ -173,17 +179,32 @@ public class GameView extends JPanel {
         switch (tokens[0]) {
             case "num": {
                 playerNumber = Integer.parseInt(tokens[1]) - 1;
+                playerInfoView.set(players.get(playerNumber));
+                playerInfoView.update();
                 break;
             }
 
             case "action": {
                 String action = tokens[1];
                 System.out.println("Player: " + action);
+                currentPlayer++;
+                if (currentPlayer == playerCount) {
+                    currentPlayer = 0;
+                    round++;
+
+                    if (round == 5) {
+                        end();
+                    }
+                }
+
+                String text = "Current Player: " + players.get(currentPlayer).getName();
+                currentPlayerLabel.setText(text);
                 break;
             }
 
             case "join": {
                 String[] names = context.client.getRoom(this.roomID);
+                playerCount = names.length;
                 for (int i = 0; i < names.length; i++) {
                     players.get(i).setName(names[i]);
                 }
@@ -224,6 +245,7 @@ public class GameView extends JPanel {
     public void setRoom(String id) {
         roomID = id;
         currentPlayer = 0;
+        round = 0;
         String message = String.format("{\"id\": \"%s\", \"type\":\"join\"}", id);
         send(message);
 
@@ -232,7 +254,7 @@ public class GameView extends JPanel {
 }
 
 class PlayerView extends JPanel {
-    private Player player;
+    public Player player;
     private JLabel playerNameLabel;
     private JLabel betLabel;
     private JLabel chipsLabel;
@@ -384,6 +406,10 @@ class PlayerInfoView extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
         add(controlPanel, gbc);
+    }
+
+    public void set(Player p) {
+        playerView.player = p;
     }
 
     public void update() {
