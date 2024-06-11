@@ -131,7 +131,7 @@ public class GameView extends JPanel {
         add(bottomPlayersPanel, gbc);
 
         // 放置控制區域視圖
-        playerInfoView = new PlayerInfoView(players.get(playerNumber));
+        playerInfoView = new PlayerInfoView(players.get(playerNumber), this);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 4;
@@ -223,6 +223,7 @@ public class GameView extends JPanel {
 
     public void setRoom(String id) {
         roomID = id;
+        currentPlayer = 0;
         String message = String.format("{\"id\": \"%s\", \"type\":\"join\"}", id);
         send(message);
 
@@ -285,8 +286,10 @@ class PlayerInfoView extends JPanel {
     private Button raiseButton;
     private JTextField raiseAmountField;
     PlayerView playerView;
+    GameView parent;
 
-    public PlayerInfoView(Player player) {
+    public PlayerInfoView(Player player, GameView gv) {
+        parent = gv;
         setBackground(new Color(144, 238, 144));
         setLayout(new GridBagLayout());
         // 添加 EtchedBorder
@@ -339,12 +342,36 @@ class PlayerInfoView extends JPanel {
 
         foldButton = new Button("Fold", "normal");
         buttonsPanel.add(foldButton);
+        foldButton.addActionListener(e -> {
+            if (parent.currentPlayer != parent.playerNumber) {
+                return;
+            }
+
+            String msg = String.format("{\"id\": \"%s\", \"type\":\"action\",\"action\":\"fold\"}", parent.roomID);
+            parent.send(msg);
+        });
 
         callButton = new Button("Call", "normal");
         buttonsPanel.add(callButton);
+        callButton.addActionListener(e -> {
+            if (parent.currentPlayer != parent.playerNumber) {
+                return;
+            }
+
+            String msg = String.format("{\"id\": \"%s\", \"type\":\"action\",\"action\":\"call\"}", parent.roomID);
+            parent.send(msg);
+        });
 
         raiseButton = new Button("Raise", "normal");
         buttonsPanel.add(raiseButton);
+        raiseButton.addActionListener(e -> {
+            if (parent.currentPlayer != parent.playerNumber) {
+                return;
+            }
+
+            String msg = String.format("{\"id\": \"%s\", \"type\":\"action\",\"action\":\"raise\"}", parent.roomID);
+            parent.send(msg);
+        });
 
         controlPanel.add(buttonsPanel, rightGbc);
 
